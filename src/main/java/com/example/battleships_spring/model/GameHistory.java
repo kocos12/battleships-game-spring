@@ -17,6 +17,13 @@ public class GameHistory {
     private String player1_id;
     private String player2_id;
 
+    public GameHistory() {
+    }
+
+    public GameHistory(String player1_id) {
+        this.player1_id = player1_id;
+    }
+
     public GameHistory(String player1_id, String player2_id) {
         HashMap<String, BattlegroundChunk> defaultBattleground = new HashMap<>();
         BattlegroundChunk battlegroundChunk = new BattlegroundChunk(false, false);
@@ -29,6 +36,22 @@ public class GameHistory {
         this.battleground1 = defaultBattleground;
         this.battleground2 = defaultBattleground;
         this.player1_id = player1_id;
+        this.player2_id = player2_id;
+    }
+
+    public String getPlayer1_id() {
+        return player1_id;
+    }
+
+    public void setPlayer1_id(String player1_id) {
+        this.player1_id = player1_id;
+    }
+
+    public String getPlayer2_id() {
+        return player2_id;
+    }
+
+    public void setPlayer2_id(String player2_id) {
         this.player2_id = player2_id;
     }
 

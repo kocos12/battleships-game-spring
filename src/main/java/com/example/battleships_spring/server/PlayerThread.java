@@ -1,5 +1,7 @@
 package com.example.battleships_spring.server;
 
+import com.example.battleships_spring.model.GameHistory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,10 +13,16 @@ public class PlayerThread extends Thread {
     private Socket socket;
     private BattleshipsSpringApplication server;
     private PrintWriter writer;
+    private DatabaseOperator databaseOperator;
+    private PlayerThread opponentPlayer;
+    private GameHistory gameHistory;
 
-    public PlayerThread(Socket socket, BattleshipsSpringApplication server) {
+
+    public PlayerThread(Socket socket, BattleshipsSpringApplication server, DatabaseOperator databaseOperator) {
         this.socket = socket;
         this.server = server;
+        this.databaseOperator = databaseOperator;
+        this.gameHistory = new GameHistory();
     }
 
     public void run() {
@@ -24,22 +32,36 @@ public class PlayerThread extends Thread {
 
             printUsers();
 
-            String userName = bufferedReader.readLine();
-            server.addUserName(userName);
+            String userLogin = bufferedReader.readLine();
+            server.addUserName(userLogin);
+            String userPasswd = bufferedReader.readLine();
 
-            server.broadcast("New user connected: " + userName, this);
+            if(databaseOperator.tryLoggingInPlayer(userLogin,userPasswd)){
+                System.out.println("zalogowano: " + userLogin);
+                gameHistory.setPlayer1_id(databaseOperator.findPlayerByLogin(userLogin).getId());
+                server.broadcast(userLogin + " dolaczyl do lobby", this);
+
+            }else{
+                System.out.println("Logowanie nie udane brak gracza w bazie");
+                System.out.println("Nie ma kogos takiego jak " + userLogin);
+
+                server.removeUser(userLogin, this);
+                socket.close();
+            }
+
+            //server.broadcast("New user connected: " + userLogin, this);
 
             String message;
 
             do {
                 message = bufferedReader.readLine();
-                server.broadcast(userName + ": " + message, this);
+                //server.broadcast(userLogin + ": " + message, this);
             } while (!message.equals("bye"));
 
-            server.removeUser(userName, this);
+            server.removeUser(userLogin, this);
             socket.close();
 
-            message = userName + " has quitted.";
+            message = userLogin + " has quited.";
             server.broadcast(message, this);
         } catch (IOException ioException) {
             ioException.printStackTrace();
@@ -55,5 +77,13 @@ public class PlayerThread extends Thread {
 
     void sendMessage(String message) {
         writer.println(message);
+    }
+
+    public void setOpponentPlayer(PlayerThread opponentPlayer) {
+        this.opponentPlayer = opponentPlayer;
+    }
+
+    public GameHistory getGameHistory() {
+        return gameHistory;
     }
 }

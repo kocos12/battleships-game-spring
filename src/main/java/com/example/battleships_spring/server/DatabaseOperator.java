@@ -41,4 +41,16 @@ public class DatabaseOperator {
         playerJacek.setScore(100);
         playerRepository.save(playerJacek);
     }
+
+    public boolean tryLoggingInPlayer (String login, String passwd){
+        for (Player player: playerRepository.findAll()) {
+            if(player.getLogin().equals(login) && player.getPassword().equals(passwd)){
+                return true;
+            }
+        }
+        return false;
+    }
+    public Player findPlayerByLogin(String login){
+        return playerRepository.findByLogin(login);
+    }
 }

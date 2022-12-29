@@ -21,6 +21,22 @@ public class Player {
         this.score = 0;
     }
 
+    public String getNickname() {
+        return nickname;
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
     public void setScore(int score) {
         this.score = score;
     }

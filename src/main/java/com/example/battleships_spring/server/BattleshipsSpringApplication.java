@@ -7,7 +7,9 @@ import org.springframework.context.ConfigurableApplicationContext;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @SpringBootApplication
@@ -16,16 +18,26 @@ public class BattleshipsSpringApplication {
     private Set<String> userNameSet = new HashSet<>();
     private Set<PlayerThread> userThreadSet = new HashSet<>();
 
-    public void runServer() {
+    public void runServer(DatabaseOperator databaseOperator) {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Server is listening on port: " + port);
             while (true) {
                 Socket socket = serverSocket.accept();
                 System.out.println("User connected");
 
-                PlayerThread user = new PlayerThread(socket, this);
+                PlayerThread user = new PlayerThread(socket, this, databaseOperator);
                 userThreadSet.add(user);
                 user.start();
+
+                if(userThreadSet.size()%2 == 0){
+                    System.out.println("Mozna utowrzyc gre - mam 2 graczy!");
+                    List<PlayerThread> playerThreadArrayList = new ArrayList<>(userThreadSet);
+                    int setSize = userThreadSet.size();
+//                    playerThreadArrayList.get(userThreadSet.size()-1).setOpponentPlayer(playerThreadArrayList.get(userThreadSet.size()-2));
+//                    playerThreadArrayList.get(userThreadSet.size()-2).setOpponentPlayer(playerThreadArrayList.get(userThreadSet.size()-1));
+                    playerThreadArrayList.get(setSize-1).getGameHistory()
+                            .setPlayer2_id(playerThreadArrayList.get(setSize-2).getGameHistory().getPlayer1_id());
+                }
             }
         } catch (IOException exception) {
             exception.printStackTrace();
@@ -38,7 +50,7 @@ public class BattleshipsSpringApplication {
 
         try {
             BattleshipsSpringApplication server = new BattleshipsSpringApplication();
-            server.runServer();
+            server.runServer(databaseOperator);
         } catch (Exception exception) {
             exception.printStackTrace();
         }
@@ -51,7 +63,7 @@ public class BattleshipsSpringApplication {
 //        databaseOperator.showPlayers();
     }
 
-    void broadcast(String message, PlayerThread author)
+    void broadcast(String message, PlayerThread author) //jak wysyłamy
     {
         for (PlayerThread user : userThreadSet)
         {
