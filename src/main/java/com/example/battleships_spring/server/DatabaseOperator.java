@@ -53,4 +53,7 @@ public class DatabaseOperator {
     public Player findPlayerByLogin(String login){
         return playerRepository.findByLogin(login);
     }
+    public Player findPlayerById(String id){
+        return playerRepository.findPlayerById(id);
+    }
 }

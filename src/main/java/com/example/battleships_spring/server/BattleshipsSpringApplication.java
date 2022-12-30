@@ -16,7 +16,8 @@ import java.util.Set;
 public class BattleshipsSpringApplication {
     final public int port = 9000;
     private Set<String> userNameSet = new HashSet<>();
-    private Set<PlayerThread> userThreadSet = new HashSet<>();
+    private Set<PlayerThread> connectedUsers = new HashSet<>();
+    private Set<PlayerThread> matchMaking = new HashSet<>();
 
     public void runServer(DatabaseOperator databaseOperator) {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -26,18 +27,8 @@ public class BattleshipsSpringApplication {
                 System.out.println("User connected");
 
                 PlayerThread user = new PlayerThread(socket, this, databaseOperator);
-                userThreadSet.add(user);
+                connectedUsers.add(user);
                 user.start();
-
-                if(userThreadSet.size()%2 == 0){
-                    System.out.println("Mozna utowrzyc gre - mam 2 graczy!");
-                    List<PlayerThread> playerThreadArrayList = new ArrayList<>(userThreadSet);
-                    int setSize = userThreadSet.size();
-//                    playerThreadArrayList.get(userThreadSet.size()-1).setOpponentPlayer(playerThreadArrayList.get(userThreadSet.size()-2));
-//                    playerThreadArrayList.get(userThreadSet.size()-2).setOpponentPlayer(playerThreadArrayList.get(userThreadSet.size()-1));
-                    playerThreadArrayList.get(setSize-1).getGameHistory()
-                            .setPlayer2_id(playerThreadArrayList.get(setSize-2).getGameHistory().getPlayer1_id());
-                }
             }
         } catch (IOException exception) {
             exception.printStackTrace();
@@ -63,16 +54,16 @@ public class BattleshipsSpringApplication {
 //        databaseOperator.showPlayers();
     }
 
-    void broadcast(String message, PlayerThread author) //jak wysyłamy
+    void broadcastToLobby(String message, PlayerThread author) //jak wysyłamy
     {
-        for (PlayerThread user : userThreadSet)
+        for (PlayerThread user : matchMaking)
         {
             if (user != author)
                 user.sendMessage(message);
         }
     }
     boolean hasUsers() {
-        return !userThreadSet.isEmpty();
+        return !connectedUsers.isEmpty();
     }
     Set<String> getUserNameSet()
     {
@@ -87,8 +78,38 @@ public class BattleshipsSpringApplication {
     {
         if(userNameSet.remove(userName))
         {
-            userThreadSet.remove(playerThread);
+            connectedUsers.remove(playerThread);
             System.out.println("User: " + userName + " exited chat");
+        }
+    }
+    void addPlayerToMatchmaking(PlayerThread playerThread){
+        matchMaking.add(playerThread);
+    }
+    boolean tryMatchmaking(PlayerThread author){
+        if(matchMaking.size()%2 == 0 && matchMaking.size() > 0){
+            System.out.println("Mozna utowrzyc gre - mam 2 graczy!");
+
+            List<PlayerThread> matchmakingArray = new ArrayList<>(matchMaking);
+            int setSize = matchMaking.size();
+
+            //przypisanie ref wątków
+            matchmakingArray.get(setSize-1).setOpponentPlayer(matchmakingArray.get(setSize-2));
+            matchmakingArray.get(setSize-2).setOpponentPlayer(matchmakingArray.get(setSize-1));
+
+            //przypisanie info o przeciwniku do gameHistory
+            matchmakingArray.get(setSize-1).getGameHistory()
+                    .setPlayer2_id(matchmakingArray.get(setSize-2).getGameHistory().getPlayer1_id());
+            matchmakingArray.get(setSize-2).getGameHistory()
+                    .setPlayer2_id(matchmakingArray.get(setSize-1).getGameHistory().getPlayer1_id());
+
+            //rozesłanie powiadomien kto z kim gra
+            author.getOpponentPlayer().sendMessage("Twoim przeciwnikiem jest " + author.getMyPlayerNickname());
+            author.getOpponentPlayer().getOpponentPlayer().sendMessage("Twoim przeciwnikiem jest "+
+                    author.getOpponentPlayer().getMyPlayerNickname());
+            return true;
+        }else{
+            System.out.println("Matchmaking nie udany - brak par");
+            return false;
         }
     }
 }
