@@ -54,35 +54,32 @@ public class BattleshipsSpringApplication {
 //        databaseOperator.showPlayers();
     }
 
-    void broadcastToLobby(String message, PlayerThread author) //jak wysyłamy
-    {
+    void broadcastToLobby(String message, PlayerThread author){  //jak wysyłamy
         for (PlayerThread user : matchMaking)
         {
             if (user != author)
                 user.sendMessage(message);
         }
     }
-    boolean hasUsers() {
+    boolean hasUsers(){
         return !connectedUsers.isEmpty();
     }
-    Set<String> getUserNameSet()
-    {
+    Set<String> getUserNameSet(){
         return userNameSet;
     }
-    void addUserName(String userName)
-    {
+    void addUserName(String userName){
         userNameSet.add(userName);
     }
 
-    void removeUser(String userName, PlayerThread playerThread)
-    {
+    void removeUser(String userName, PlayerThread playerThread) {
         if(userNameSet.remove(userName))
         {
             connectedUsers.remove(playerThread);
+            matchMaking.remove(playerThread);
             System.out.println("User: " + userName + " exited chat");
         }
     }
-    void addPlayerToMatchmaking(PlayerThread playerThread){
+    void addPlayerToMatchmaking(PlayerThread playerThread) {
         matchMaking.add(playerThread);
     }
     boolean tryMatchmaking(PlayerThread author){
@@ -102,6 +99,10 @@ public class BattleshipsSpringApplication {
             matchmakingArray.get(setSize-2).getGameHistory()
                     .setPlayer2_id(matchmakingArray.get(setSize-1).getGameHistory().getPlayer1_id());
 
+            //gdy zaczynaja grac znikaja z lobby
+            matchMaking.remove(author);
+            matchMaking.remove(author.getOpponentPlayer());
+
             //rozesłanie powiadomien kto z kim gra
             author.getOpponentPlayer().sendMessage("Twoim przeciwnikiem jest " + author.getMyPlayerNickname());
             author.getOpponentPlayer().getOpponentPlayer().sendMessage("Twoim przeciwnikiem jest "+
@@ -109,6 +110,7 @@ public class BattleshipsSpringApplication {
             return true;
         }else{
             System.out.println("Matchmaking nie udany - brak par");
+            author.sendMessage("Matchmaking nie udany - brak innych graczy w lobby. Zaczekaj az dolaczy wiecej graczy.");
             return false;
         }
     }

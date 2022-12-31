@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 
 
 public class PlayerThread extends Thread {
@@ -31,23 +32,19 @@ public class PlayerThread extends Thread {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new PrintWriter(socket.getOutputStream(), true);
 
-            printUsers();
-
             String userLogin = bufferedReader.readLine();
-
             String userPasswd = bufferedReader.readLine();
 
             while(!databaseOperator.tryLoggingInPlayer(userLogin,userPasswd)){
-                System.out.println("Logowanie nie udane brak gracza w bazie");
+                System.out.println("Logowanie nie udane, brak gracza w bazie");
                 System.out.println("Nie ma kogos takiego jak " + userLogin);
                 this.sendMessage("Nie poprawne dane logowania! Spróbuj ponownie");
                 userLogin = bufferedReader.readLine();
                 userPasswd = bufferedReader.readLine();
-//                server.removeUser(userLogin, this);
-//                socket.close();
             }
 
-            System.out.println("zalogowano: " + userLogin);
+            System.out.println("Zalogowano: " + userLogin);
+            this.sendMessage("Zalogowano poprawnie.");
             server.addUserName(userLogin);
             gameHistory.setPlayer1_id(databaseOperator.findPlayerByLogin(userLogin).getId());
             server.addPlayerToMatchmaking(this);
@@ -57,13 +54,10 @@ public class PlayerThread extends Thread {
                 //no to gramy!
             }
 
-            //server.broadcast("New user connected: " + userLogin, this);
-
             String message;
 
             do {
                 message = bufferedReader.readLine();
-                //server.broadcast(userLogin + ": " + message, this);
             } while (!message.equals("bye"));
 
             server.removeUser(userLogin, this);
@@ -71,6 +65,8 @@ public class PlayerThread extends Thread {
 
             message = userLogin + " has quited.";
             server.broadcastToLobby(message, this);
+        } catch (SocketException socketException){
+            System.out.println("Player ragequited, perhaps. I mean for sure hah");
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
