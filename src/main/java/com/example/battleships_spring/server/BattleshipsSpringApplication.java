@@ -109,8 +109,8 @@ public class BattleshipsSpringApplication {
                     author.getOpponentPlayer().getMyPlayerNickname());
             return true;
         }else{
-            System.out.println("Matchmaking nie udany - brak par");
-            author.sendMessage("Matchmaking nie udany - brak innych graczy w lobby. Zaczekaj az dolaczy wiecej graczy.");
+            System.out.println("Matchmaking nie udany - brak pary");
+            author.sendMessage("Brak graczy w lobby. Zaczekaj az dolaczy wiecej graczy.");
             return false;
         }
     }

@@ -28,17 +28,18 @@ public class PlayerThread extends Thread {
     }
 
     public void run() {
+        String userLogin = "";
         try {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new PrintWriter(socket.getOutputStream(), true);
 
-            String userLogin = bufferedReader.readLine();
+            userLogin = bufferedReader.readLine();
             String userPasswd = bufferedReader.readLine();
 
             while(!databaseOperator.tryLoggingInPlayer(userLogin,userPasswd)){
                 System.out.println("Logowanie nie udane, brak gracza w bazie");
                 System.out.println("Nie ma kogos takiego jak " + userLogin);
-                this.sendMessage("Nie poprawne dane logowania! Spróbuj ponownie");
+                this.sendMessage("Bledne dane logowania. Sprobuj ponownie.");
                 userLogin = bufferedReader.readLine();
                 userPasswd = bufferedReader.readLine();
             }
@@ -66,7 +67,8 @@ public class PlayerThread extends Thread {
             message = userLogin + " has quited.";
             server.broadcastToLobby(message, this);
         } catch (SocketException socketException){
-            System.out.println("Player ragequited, perhaps. I mean for sure hah");
+            //System.out.println("Player ragequited, perhaps. I mean for sure hah");
+            server.removeUser(userLogin,this);
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
