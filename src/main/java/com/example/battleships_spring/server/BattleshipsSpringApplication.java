@@ -107,6 +107,9 @@ public class BattleshipsSpringApplication {
             author.getOpponentPlayer().sendMessage("Twoim przeciwnikiem jest " + author.getMyPlayerNickname());
             author.getOpponentPlayer().getOpponentPlayer().sendMessage("Twoim przeciwnikiem jest "+
                     author.getOpponentPlayer().getMyPlayerNickname());
+
+            //daje znak przeciiwnkowi
+            author.getOpponentPlayer().setStartGame(true);
             return true;
         }else{
             System.out.println("Matchmaking nie udany - brak pary");

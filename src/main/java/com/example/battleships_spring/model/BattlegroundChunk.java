@@ -11,6 +11,22 @@ public class BattlegroundChunk {
         this.isHit = isHit;
     }
 
+    public boolean isShip() {
+        return isShip;
+    }
+
+    public void setShip(boolean ship) {
+        isShip = ship;
+    }
+
+    public boolean isHit() {
+        return isHit;
+    }
+
+    public void setHit(boolean hit) {
+        isHit = hit;
+    }
+
     @Override
     public String toString() {
         return "BattlegroundChunk{" +

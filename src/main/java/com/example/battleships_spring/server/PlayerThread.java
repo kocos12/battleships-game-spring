@@ -15,9 +15,11 @@ public class PlayerThread extends Thread {
     private Socket socket;
     private BattleshipsSpringApplication server;
     private PrintWriter writer;
+    private BufferedReader bufferedReader;
     private DatabaseOperator databaseOperator;
     private PlayerThread opponentPlayer;
     private GameHistory gameHistory;
+    private boolean startGame;
 
 
     public PlayerThread(Socket socket, BattleshipsSpringApplication server, DatabaseOperator databaseOperator) {
@@ -30,7 +32,7 @@ public class PlayerThread extends Thread {
     public void run() {
         String userLogin = "";
         try {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new PrintWriter(socket.getOutputStream(), true);
 
             userLogin = bufferedReader.readLine();
@@ -51,15 +53,15 @@ public class PlayerThread extends Thread {
             server.addPlayerToMatchmaking(this);
             server.broadcastToLobby(userLogin + " dolaczyl do lobby", this);
 
+            String message;
             if(server.tryMatchmaking(this)){
                 //no to gramy!
+                placeShips();
+
+            }else{
+                while(!startGame){}
+                placeShips();
             }
-
-            String message;
-
-            do {
-                message = bufferedReader.readLine();
-            } while (!message.equals("bye"));
 
             server.removeUser(userLogin, this);
             socket.close();
@@ -74,18 +76,32 @@ public class PlayerThread extends Thread {
         }
     }
 
-    void printUsers() {
-        if (server.hasUsers())
-            writer.println("Connected users: " + server.getUserNameSet());
-        else
-            writer.println("No other users connected");
+    private void placeShips() throws IOException {
+        gameHistory.prepareBattleground();
+        String operationType;
+        String coord;
+        do {
+            operationType = bufferedReader.readLine();
+            coord = bufferedReader.readLine();
+
+            if(operationType.equals("add")){
+                gameHistory.setShipOnCoord(coord);
+            }
+            if(operationType.equals("remove")){
+                gameHistory.removeShipOnCoord(coord);
+            }
+
+        } while (!operationType.equals("Ready"));
+        opponentPlayer.getGameHistory().setBattleground2(gameHistory.getBattleground1());
+        opponentPlayer.sendMessage("Przeciwnik ustawil statki");
+        System.out.println(gameHistory);
     }
 
-    void sendMessage(String message) {
+    public void sendMessage(String message) {
         writer.println(message);
     }
 
-    String getMyPlayerNickname(){
+    public String getMyPlayerNickname(){
         Player temp = databaseOperator.findPlayerById(this.gameHistory.getPlayer1_id());
         return  temp.getNickname();
     }
@@ -100,5 +116,9 @@ public class PlayerThread extends Thread {
 
     public GameHistory getGameHistory() {
         return gameHistory;
+    }
+
+    public void setStartGame(boolean startGame) {
+        this.startGame = startGame;
     }
 }
