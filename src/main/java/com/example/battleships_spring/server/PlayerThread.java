@@ -51,7 +51,7 @@ public class PlayerThread extends Thread {
             server.addUserName(userLogin);
             gameHistory.setPlayer1_id(databaseOperator.findPlayerByLogin(userLogin).getId());
             server.addPlayerToMatchmaking(this);
-            server.broadcastToLobby(userLogin + " dolaczyl do lobby", this);
+            //server.broadcastToLobby(userLogin + " dolaczyl do lobby", this);
 
             String message;
             if(server.tryMatchmaking(this)){
@@ -62,7 +62,11 @@ public class PlayerThread extends Thread {
                 while(!startGame){}
                 placeShips();
             }
-
+//            try {
+//                Thread.sleep(30000);
+//            } catch (InterruptedException e) {
+//                throw new RuntimeException(e);
+//            }
             server.removeUser(userLogin, this);
             socket.close();
 
@@ -94,7 +98,7 @@ public class PlayerThread extends Thread {
         } while (!operationType.equals("Ready"));
         opponentPlayer.getGameHistory().setBattleground2(gameHistory.getBattleground1());
         opponentPlayer.sendMessage("Przeciwnik ustawil statki");
-        System.out.println(gameHistory);
+        System.out.println(gameHistory.getBattleground1());
     }
 
     public void sendMessage(String message) {

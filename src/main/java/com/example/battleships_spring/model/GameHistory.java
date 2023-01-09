@@ -34,15 +34,15 @@ public class GameHistory {
         this.player2_id = player2_id;
     }
     public void prepareBattleground(){
-        HashMap<String, BattlegroundChunk> defaultBattleground = new HashMap<>();
-        BattlegroundChunk battlegroundChunk = new BattlegroundChunk(false, false);
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 10; j++) {
-                String pair = i + String.valueOf(j);
-                defaultBattleground.put(pair, battlegroundChunk);
+                String pair = String.valueOf(i) + j;
+                BattlegroundChunk battlegroundChunk = new BattlegroundChunk(false, false);
+                this.battleground1.put(pair, battlegroundChunk);
             }
         }
-        this.battleground1 = defaultBattleground;
+        //System.out.println(battleground1);
+        //this.battleground1 = defaultBattleground;
     }
     public HashMap<String, BattlegroundChunk> getBattleground1() {
         return battleground1;
