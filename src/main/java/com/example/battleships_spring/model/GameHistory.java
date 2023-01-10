@@ -44,6 +44,23 @@ public class GameHistory {
         //System.out.println(battleground1);
         //this.battleground1 = defaultBattleground;
     }
+    public Boolean checkShot(String coord) {
+        if(this.battleground2.get(coord).isShip()){
+            this.battleground2.get(coord).setHit(true);
+            return true;
+        }else{
+            this.battleground2.get(coord).setHit(true);
+            return false;
+        }
+    }
+    public Boolean checkVictory(){
+        for (BattlegroundChunk bgch : battleground2.values()) {
+                if (bgch.isShip() && !bgch.isHit()) {
+                    return false;
+                }
+            }
+        return true;
+    }
     public HashMap<String, BattlegroundChunk> getBattleground1() {
         return battleground1;
     }
@@ -84,4 +101,6 @@ public class GameHistory {
                 ", player2_id='" + player2_id + '\'' +
                 '}';
     }
+
+
 }

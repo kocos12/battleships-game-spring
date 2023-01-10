@@ -51,22 +51,18 @@ public class PlayerThread extends Thread {
             server.addUserName(userLogin);
             gameHistory.setPlayer1_id(databaseOperator.findPlayerByLogin(userLogin).getId());
             server.addPlayerToMatchmaking(this);
-            //server.broadcastToLobby(userLogin + " dolaczyl do lobby", this);
 
             String message;
             if(server.tryMatchmaking(this)){
                 //no to gramy!
                 placeShips();
-
+                battle();
             }else{
                 while(!startGame){}
                 placeShips();
+                battle();
             }
-//            try {
-//                Thread.sleep(30000);
-//            } catch (InterruptedException e) {
-//                throw new RuntimeException(e);
-//            }
+
             server.removeUser(userLogin, this);
             socket.close();
 
@@ -79,7 +75,17 @@ public class PlayerThread extends Thread {
             ioException.printStackTrace();
         }
     }
-
+    private void battle()throws IOException{
+        while(gameHistory.checkVictory()){
+            String shotCoord = bufferedReader.readLine();
+            Boolean hit = gameHistory.checkShot(shotCoord);
+            if(hit){
+                sendMessage("X");
+            }else{
+                sendMessage("");
+            }
+        }
+    }
     private void placeShips() throws IOException {
         gameHistory.prepareBattleground();
         String operationType;
@@ -97,14 +103,12 @@ public class PlayerThread extends Thread {
 
         } while (!operationType.equals("Ready"));
         opponentPlayer.getGameHistory().setBattleground2(gameHistory.getBattleground1());
-        opponentPlayer.sendMessage("Przeciwnik ustawil statki");
-        System.out.println(gameHistory.getBattleground1());
+        System.out.println("Ustawiono statki");
     }
 
     public void sendMessage(String message) {
         writer.println(message);
     }
-
     public String getMyPlayerNickname(){
         Player temp = databaseOperator.findPlayerById(this.gameHistory.getPlayer1_id());
         return  temp.getNickname();
@@ -124,5 +128,12 @@ public class PlayerThread extends Thread {
 
     public void setStartGame(boolean startGame) {
         this.startGame = startGame;
+    }
+    private void czekaj(){
+        try {
+            sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

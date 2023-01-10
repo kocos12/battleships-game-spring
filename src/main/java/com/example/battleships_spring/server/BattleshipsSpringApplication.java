@@ -61,13 +61,8 @@ public class BattleshipsSpringApplication {
                 user.sendMessage(message);
         }
     }
-    boolean hasUsers(){
-        return !connectedUsers.isEmpty();
-    }
-    Set<String> getUserNameSet(){
-        return userNameSet;
-    }
-    void addUserName(String userName){
+
+    void addUserName(String userName) {
         userNameSet.add(userName);
     }
 
