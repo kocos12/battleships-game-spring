@@ -20,6 +20,8 @@ public class PlayerThread extends Thread {
     private PlayerThread opponentPlayer;
     private GameHistory gameHistory;
     private boolean startGame;
+    private boolean isReadyToBattle;
+    private volatile boolean isMyTurn;
 
 
     public PlayerThread(Socket socket, BattleshipsSpringApplication server, DatabaseOperator databaseOperator) {
@@ -38,7 +40,7 @@ public class PlayerThread extends Thread {
             userLogin = bufferedReader.readLine();
             String userPasswd = bufferedReader.readLine();
 
-            while(!databaseOperator.tryLoggingInPlayer(userLogin,userPasswd)){
+            while (!databaseOperator.tryLoggingInPlayer(userLogin, userPasswd)) {
                 System.out.println("Logowanie nie udane, brak gracza w bazie");
                 System.out.println("Nie ma kogos takiego jak " + userLogin);
                 this.sendMessage("Bledne dane logowania. Sprobuj ponownie.");
@@ -52,13 +54,11 @@ public class PlayerThread extends Thread {
             gameHistory.setPlayer1_id(databaseOperator.findPlayerByLogin(userLogin).getId());
             server.addPlayerToMatchmaking(this);
 
-            String message;
-            if(server.tryMatchmaking(this)){
-                //no to gramy!
+            if (server.tryMatchmaking(this)) {
                 placeShips();
                 battle();
-            }else{
-                while(!startGame){}
+            } else {
+                while (!startGame) {}
                 placeShips();
                 battle();
             }
@@ -66,26 +66,44 @@ public class PlayerThread extends Thread {
             server.removeUser(userLogin, this);
             socket.close();
 
-            message = userLogin + " has quited.";
-            server.broadcastToLobby(message, this);
-        } catch (SocketException socketException){
+        } catch (SocketException socketException) {
             //System.out.println("Player ragequited, perhaps. I mean for sure hah");
-            server.removeUser(userLogin,this);
+            server.removeUser(userLogin, this);
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
     }
-    private void battle()throws IOException{
-        while(gameHistory.checkVictory()){
+
+    private void battle() throws IOException {
+        while (!getOpponentPlayer().isReadyToBattle()) {}
+        System.out.println("Bitwa");
+        if(isMyTurn){
+            sendMessage("Twoj ruch");
+        }else{
+            sendMessage("Ruch przeciwnika");
+        }
+        while (gameHistory.checkVictory()) {
+            while (!isMyTurn) {
+                Thread.onSpinWait();
+            }
+
             String shotCoord = bufferedReader.readLine();
             Boolean hit = gameHistory.checkShot(shotCoord);
-            if(hit){
+            if (hit) {
                 sendMessage("X");
-            }else{
+            } else {
                 sendMessage("");
+            }
+            setMyTurn(false);
+            getOpponentPlayer().setMyTurn(true);
+            if(isMyTurn){
+                sendMessage("Twoj ruch");
+            }else{
+                sendMessage("Ruch przeciwnika");
             }
         }
     }
+
     private void placeShips() throws IOException {
         gameHistory.prepareBattleground();
         String operationType;
@@ -94,24 +112,26 @@ public class PlayerThread extends Thread {
             operationType = bufferedReader.readLine();
             coord = bufferedReader.readLine();
 
-            if(operationType.equals("add")){
+            if (operationType.equals("add")) {
                 gameHistory.setShipOnCoord(coord);
             }
-            if(operationType.equals("remove")){
+            if (operationType.equals("remove")) {
                 gameHistory.removeShipOnCoord(coord);
             }
 
         } while (!operationType.equals("Ready"));
         opponentPlayer.getGameHistory().setBattleground2(gameHistory.getBattleground1());
+        isReadyToBattle = true;
         System.out.println("Ustawiono statki");
     }
 
     public void sendMessage(String message) {
         writer.println(message);
     }
-    public String getMyPlayerNickname(){
+
+    public String getMyPlayerNickname() {
         Player temp = databaseOperator.findPlayerById(this.gameHistory.getPlayer1_id());
-        return  temp.getNickname();
+        return temp.getNickname();
     }
 
     public void setOpponentPlayer(PlayerThread opponentPlayer) {
@@ -129,11 +149,16 @@ public class PlayerThread extends Thread {
     public void setStartGame(boolean startGame) {
         this.startGame = startGame;
     }
-    private void czekaj(){
-        try {
-            sleep(5000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+
+    public boolean isReadyToBattle() {
+        return isReadyToBattle;
+    }
+
+    public boolean isMyTurn() {
+        return isMyTurn;
+    }
+
+    public void setMyTurn(boolean myTurn) {
+        isMyTurn = myTurn;
     }
 }

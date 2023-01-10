@@ -7,17 +7,17 @@ import java.util.HashMap;
 
 
 public class GameHistory {
-    //przechowywanie stanu ruchów przy rozłączeniu
     @Id
     private String id;
 
-    private HashMap<String,BattlegroundChunk> battleground1 = new HashMap<>(); //my battleground
+    private HashMap<String, BattlegroundChunk> battleground1 = new HashMap<>(); //my battleground
 
-    private HashMap<String,BattlegroundChunk> battleground2 = new HashMap<>(); //opponent's battleground
+    private HashMap<String, BattlegroundChunk> battleground2 = new HashMap<>(); //opponent's battleground
     private String player1_id;
     private String player2_id;
 
-    public GameHistory() {}
+    public GameHistory() {
+    }
 
     public GameHistory(String player1_id, String player2_id) {
         HashMap<String, BattlegroundChunk> defaultBattleground = new HashMap<>();
@@ -33,7 +33,8 @@ public class GameHistory {
         this.player1_id = player1_id;
         this.player2_id = player2_id;
     }
-    public void prepareBattleground(){
+
+    public void prepareBattleground() {
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 10; j++) {
                 String pair = String.valueOf(i) + j;
@@ -41,26 +42,27 @@ public class GameHistory {
                 this.battleground1.put(pair, battlegroundChunk);
             }
         }
-        //System.out.println(battleground1);
-        //this.battleground1 = defaultBattleground;
     }
+
     public Boolean checkShot(String coord) {
-        if(this.battleground2.get(coord).isShip()){
+        if (this.battleground2.get(coord).isShip()) {
             this.battleground2.get(coord).setHit(true);
             return true;
-        }else{
+        } else {
             this.battleground2.get(coord).setHit(true);
             return false;
         }
     }
-    public Boolean checkVictory(){
+
+    public Boolean checkVictory() {
         for (BattlegroundChunk bgch : battleground2.values()) {
-                if (bgch.isShip() && !bgch.isHit()) {
-                    return false;
-                }
+            if (bgch.isShip() && (!bgch.isHit())) {
+                return true;
             }
-        return true;
+        }
+        return false;
     }
+
     public HashMap<String, BattlegroundChunk> getBattleground1() {
         return battleground1;
     }
@@ -69,12 +71,14 @@ public class GameHistory {
         this.battleground2 = battleground2;
     }
 
-    public void setShipOnCoord(String coord){
+    public void setShipOnCoord(String coord) {
         battleground1.get(coord).setShip(true);
     }
-    public void removeShipOnCoord(String coord){
+
+    public void removeShipOnCoord(String coord) {
         battleground1.get(coord).setShip(false);
     }
+
     public String getPlayer1_id() {
         return player1_id;
     }
@@ -101,6 +105,4 @@ public class GameHistory {
                 ", player2_id='" + player2_id + '\'' +
                 '}';
     }
-
-
 }

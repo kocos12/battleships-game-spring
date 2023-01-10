@@ -49,14 +49,10 @@ public class BattleshipsSpringApplication {
 //        databaseOperator.saveSamplePlayer();
 //        databaseOperator.saveSampleGameHistory();
 //        databaseOperator.showPlayers();
-//        databaseOperator.updatePlayerScore();
-//        databaseOperator.updatePlayerScore();
-//        databaseOperator.showPlayers();
     }
 
-    void broadcastToLobby(String message, PlayerThread author){  //jak wysyłamy
-        for (PlayerThread user : matchMaking)
-        {
+    void broadcastToLobby(String message, PlayerThread author) {  //jak wysyłamy
+        for (PlayerThread user : matchMaking) {
             if (user != author)
                 user.sendMessage(message);
         }
@@ -67,46 +63,49 @@ public class BattleshipsSpringApplication {
     }
 
     void removeUser(String userName, PlayerThread playerThread) {
-        if(userNameSet.remove(userName))
-        {
+        if (userNameSet.remove(userName)) {
             connectedUsers.remove(playerThread);
             matchMaking.remove(playerThread);
             System.out.println("User: " + userName + " exited chat");
         }
     }
+
     void addPlayerToMatchmaking(PlayerThread playerThread) {
         matchMaking.add(playerThread);
     }
-    boolean tryMatchmaking(PlayerThread author){
-        if(matchMaking.size()%2 == 0 && matchMaking.size() > 0){
+
+    boolean tryMatchmaking(PlayerThread author) {
+        if (matchMaking.size() % 2 == 0 && matchMaking.size() > 0) {
             System.out.println("Mozna utowrzyc gre - mam 2 graczy!");
 
             List<PlayerThread> matchmakingArray = new ArrayList<>(matchMaking);
             int setSize = matchMaking.size();
 
             //przypisanie ref wątków
-            matchmakingArray.get(setSize-1).setOpponentPlayer(matchmakingArray.get(setSize-2));
-            matchmakingArray.get(setSize-2).setOpponentPlayer(matchmakingArray.get(setSize-1));
+            matchmakingArray.get(setSize - 1).setOpponentPlayer(matchmakingArray.get(setSize - 2));
+            matchmakingArray.get(setSize - 2).setOpponentPlayer(matchmakingArray.get(setSize - 1));
 
             //przypisanie info o przeciwniku do gameHistory
-            matchmakingArray.get(setSize-1).getGameHistory()
-                    .setPlayer2_id(matchmakingArray.get(setSize-2).getGameHistory().getPlayer1_id());
-            matchmakingArray.get(setSize-2).getGameHistory()
-                    .setPlayer2_id(matchmakingArray.get(setSize-1).getGameHistory().getPlayer1_id());
+            matchmakingArray.get(setSize - 1).getGameHistory()
+                    .setPlayer2_id(matchmakingArray.get(setSize - 2).getGameHistory().getPlayer1_id());
+            matchmakingArray.get(setSize - 2).getGameHistory()
+                    .setPlayer2_id(matchmakingArray.get(setSize - 1).getGameHistory().getPlayer1_id());
 
             //gdy zaczynaja grac znikaja z lobby
             matchMaking.remove(author);
             matchMaking.remove(author.getOpponentPlayer());
 
             //rozesłanie powiadomien kto z kim gra
-            author.getOpponentPlayer().sendMessage("Twoim przeciwnikiem jest " + author.getMyPlayerNickname());
-            author.getOpponentPlayer().getOpponentPlayer().sendMessage("Twoim przeciwnikiem jest "+
+            //author.getOpponentPlayer().sendMessage("Twoim przeciwnikiem jest " + author.getMyPlayerNickname());
+            author.getOpponentPlayer().getOpponentPlayer().sendMessage("Twoim przeciwnikiem jest " +
                     author.getOpponentPlayer().getMyPlayerNickname());
 
             //daje znak przeciiwnkowi
             author.getOpponentPlayer().setStartGame(true);
+            //zaczyna ten drugi
+            author.setMyTurn(true);
             return true;
-        }else{
+        } else {
             System.out.println("Matchmaking nie udany - brak pary");
             author.sendMessage("Brak graczy w lobby. Zaczekaj az dolaczy wiecej graczy.");
             return false;
