@@ -56,4 +56,9 @@ public class DatabaseOperator {
     public Player findPlayerById(String id){
         return playerRepository.findPlayerById(id);
     }
+    public void addPointToPlayer(String id){
+       Player player = findPlayerById(id);
+       player.setScore(player.getScore()+1);
+       playerRepository.save(player);
+    }
 }

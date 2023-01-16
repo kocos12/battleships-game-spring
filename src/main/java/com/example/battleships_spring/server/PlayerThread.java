@@ -22,6 +22,7 @@ public class PlayerThread extends Thread {
     private boolean startGame;
     private boolean isReadyToBattle;
     private volatile boolean isMyTurn;
+    private boolean opponentWon;
 
 
     public PlayerThread(Socket socket, BattleshipsSpringApplication server, DatabaseOperator databaseOperator) {
@@ -44,6 +45,7 @@ public class PlayerThread extends Thread {
                 System.out.println("Logowanie nie udane, brak gracza w bazie");
                 System.out.println("Nie ma kogos takiego jak " + userLogin);
                 this.sendMessage("Bledne dane logowania. Sprobuj ponownie.");
+                this.sendMessage("");
                 userLogin = bufferedReader.readLine();
                 userPasswd = bufferedReader.readLine();
             }
@@ -82,25 +84,28 @@ public class PlayerThread extends Thread {
         }else{
             sendMessage("Ruch przeciwnika");
         }
-        while (gameHistory.checkVictory()) {
+        while (gameHistory.checkVictory() && !isOpponentWon()) {
             while (!isMyTurn) {
                 Thread.onSpinWait();
             }
+            if(!isOpponentWon()) {
+                String shotCoord = bufferedReader.readLine();
+                Boolean hit = gameHistory.checkShot(shotCoord);
+                if (hit) {
+                    sendMessage("X");
+                } else {
+                    sendMessage("");
+                }
+                //getOpponentPlayer().sendMessage("Twoj ruch");
 
-            String shotCoord = bufferedReader.readLine();
-            Boolean hit = gameHistory.checkShot(shotCoord);
-            if (hit) {
-                sendMessage("X");
-            } else {
-                sendMessage("");
+                setMyTurn(false);
+                getOpponentPlayer().setMyTurn(true);
             }
-            setMyTurn(false);
-            getOpponentPlayer().setMyTurn(true);
-            if(isMyTurn){
-                sendMessage("Twoj ruch");
-            }else{
-                sendMessage("Ruch przeciwnika");
-            }
+        }
+        if(!opponentWon){
+            getOpponentPlayer().setOpponentWon(true);
+            databaseOperator.addPointToPlayer(gameHistory.getPlayer1_id());
+            System.out.println("Dodano punkt za zwyciestwo");
         }
     }
 
@@ -160,5 +165,13 @@ public class PlayerThread extends Thread {
 
     public void setMyTurn(boolean myTurn) {
         isMyTurn = myTurn;
+    }
+
+    public boolean isOpponentWon() {
+        return opponentWon;
+    }
+
+    public void setOpponentWon(boolean opponentWon) {
+        this.opponentWon = opponentWon;
     }
 }
