@@ -6,4 +6,5 @@ public class GameHistoryService {
     public GameHistoryService(GameHistoryRepository gameHistoryRepository) {
         this.gameHistoryRepository = gameHistoryRepository;
     }
+
 }

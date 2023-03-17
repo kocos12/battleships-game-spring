@@ -3,7 +3,6 @@ package com.example.battleships_spring.model;
 
 import org.springframework.data.annotation.Id;
 
-import java.util.Objects;
 
 public class Player {
     @Id
