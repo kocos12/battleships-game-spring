@@ -14,12 +14,23 @@ import java.util.Set;
 
 @SpringBootApplication
 public class BattleshipsSpringApplication {
-    final public int port = 9000;
+    private final int port = 9000;
     private Set<String> userNameSet = new HashSet<>();
     private Set<PlayerThread> connectedUsers = new HashSet<>();
     private Set<PlayerThread> matchMaking = new HashSet<>();
 
-    public void runServer(DatabaseOperator databaseOperator) {
+
+    public static void main(String[] args) {
+        ConfigurableApplicationContext context = SpringApplication.run(BattleshipsSpringApplication.class, args);
+        PlayerService playerService = context.getBean(PlayerService.class);
+        try {
+            BattleshipsSpringApplication server = new BattleshipsSpringApplication();
+            server.runServer(playerService);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+    }
+    public void runServer(PlayerService databaseOperator) {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("Server is listening on port: " + port);
             while (true) {
@@ -34,30 +45,6 @@ public class BattleshipsSpringApplication {
             exception.printStackTrace();
         }
     }
-
-    public static void main(String[] args) {
-        ConfigurableApplicationContext context = SpringApplication.run(BattleshipsSpringApplication.class, args);
-        DatabaseOperator databaseOperator = context.getBean(DatabaseOperator.class);
-
-        try {
-            BattleshipsSpringApplication server = new BattleshipsSpringApplication();
-            server.runServer(databaseOperator);
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
-//        databaseOperator.deleteAll();
-//        databaseOperator.saveSamplePlayer();
-//        databaseOperator.saveSampleGameHistory();
-//        databaseOperator.showPlayers();
-    }
-
-    void broadcastToLobby(String message, PlayerThread author) {  //jak wysyłamy
-        for (PlayerThread user : matchMaking) {
-            if (user != author)
-                user.sendMessage(message);
-        }
-    }
-
     void addUserName(String userName) {
         userNameSet.add(userName);
     }

@@ -13,10 +13,10 @@ import java.net.SocketException;
 
 public class PlayerThread extends Thread {
     private Socket socket;
-    private BattleshipsSpringApplication server;
+    private final BattleshipsSpringApplication server;
     private PrintWriter writer;
     private BufferedReader bufferedReader;
-    private DatabaseOperator databaseOperator;
+    private final PlayerService playerService;
     private PlayerThread opponentPlayer;
     private GameHistory gameHistory;
     private boolean startGame;
@@ -25,10 +25,10 @@ public class PlayerThread extends Thread {
     private boolean opponentWon;
 
 
-    public PlayerThread(Socket socket, BattleshipsSpringApplication server, DatabaseOperator databaseOperator) {
+    public PlayerThread(Socket socket, BattleshipsSpringApplication server, PlayerService playerService) {
         this.socket = socket;
         this.server = server;
-        this.databaseOperator = databaseOperator;
+        this.playerService = playerService;
         this.gameHistory = new GameHistory();
     }
 
@@ -41,7 +41,7 @@ public class PlayerThread extends Thread {
             userLogin = bufferedReader.readLine();
             String userPasswd = bufferedReader.readLine();
 
-            while (!databaseOperator.tryLoggingInPlayer(userLogin, userPasswd)) {
+            while (!playerService.tryLoggingInPlayer(userLogin, userPasswd)) {
                 System.out.println("Logowanie nie udane, brak gracza w bazie");
                 System.out.println("Nie ma kogos takiego jak " + userLogin);
                 this.sendMessage("Bledne dane logowania. Sprobuj ponownie.");
@@ -53,7 +53,7 @@ public class PlayerThread extends Thread {
             System.out.println("Zalogowano: " + userLogin);
             this.sendMessage("Zalogowano poprawnie.");
             server.addUserName(userLogin);
-            gameHistory.setPlayer1_id(databaseOperator.findPlayerByLogin(userLogin).getId());
+            gameHistory.setPlayer1_id(playerService.findPlayerByLogin(userLogin).getId());
             server.addPlayerToMatchmaking(this);
 
             if (server.tryMatchmaking(this)) {
@@ -69,7 +69,6 @@ public class PlayerThread extends Thread {
             socket.close();
 
         } catch (SocketException socketException) {
-            //System.out.println("Player ragequited, perhaps. I mean for sure hah");
             server.removeUser(userLogin, this);
         } catch (IOException ioException) {
             ioException.printStackTrace();
@@ -84,11 +83,11 @@ public class PlayerThread extends Thread {
         }else{
             sendMessage("Ruch przeciwnika");
         }
-        while (gameHistory.checkVictory() && !isOpponentWon()) {
+        while (gameHistory.checkVictory() && isOpponentLost()) {
             while (!isMyTurn) {
                 Thread.onSpinWait();
             }
-            if(!isOpponentWon()) {
+            if(isOpponentLost()) {
                 String shotCoord = bufferedReader.readLine();
                 Boolean hit = gameHistory.checkShot(shotCoord);
                 if (hit) {
@@ -104,7 +103,7 @@ public class PlayerThread extends Thread {
         }
         if(!opponentWon){
             getOpponentPlayer().setOpponentWon(true);
-            databaseOperator.addPointToPlayer(gameHistory.getPlayer1_id());
+            playerService.addPointToPlayer(gameHistory.getPlayer1_id());
             System.out.println("Dodano punkt za zwyciestwo");
         }
     }
@@ -135,7 +134,7 @@ public class PlayerThread extends Thread {
     }
 
     public String getMyPlayerNickname() {
-        Player temp = databaseOperator.findPlayerById(this.gameHistory.getPlayer1_id());
+        Player temp = playerService.findPlayerById(this.gameHistory.getPlayer1_id());
         return temp.getNickname();
     }
 
@@ -159,16 +158,12 @@ public class PlayerThread extends Thread {
         return isReadyToBattle;
     }
 
-    public boolean isMyTurn() {
-        return isMyTurn;
-    }
-
     public void setMyTurn(boolean myTurn) {
         isMyTurn = myTurn;
     }
 
-    public boolean isOpponentWon() {
-        return opponentWon;
+    public boolean isOpponentLost() {
+        return !opponentWon;
     }
 
     public void setOpponentWon(boolean opponentWon) {
